@@ -1,0 +1,47 @@
+{
+    "users": [
+        {
+            "admin": true,
+            "name": "Admin",
+            "password": "sha254-some-long-text-string",
+            "public_id": "some-hashed-long-string"
+        },
+        {
+            "admin": false,
+            "name": "Tsofa",
+            "password": "sha254-some-long-text-string",
+            "public_id": "some-hashed-long-string"
+        }
+        ]
+}
+## mine here goes like this
+User sign up
+
+{
+	"username":"mama", 
+	"first_name":"Leeanne", 
+	"last_name":"Khavai",
+	"email": "leeann@maintenancetracker.com",
+	"password": "Mama456",
+	"confirm_password": "Mama456"
+}
+
+User sign in
+{
+    "username":"maestro",
+    "password":"amka123"
+}
+
+Reset_password
+{
+    "old_password": "amka123",
+    "new_password": "twezetu987",
+    "confirm_new_password": "twezetu987"
+}
+
+Create a todos
+{
+    "complete":false,
+    "id":4,
+    "text": "Create a Youtube Video"
+}

@@ -1,0 +1,123 @@
+# api.py
+from flask import Flask, request, jsonify
+
+import uuid
+from werkzeug.security import generate_password_hash, check_password_hash
+
+#from flask_sqlachemy import SQLAlchemy
+import psycopg2
+
+from pprint import pprint
+
+app = Flask(__name__)
+
+# app.config['SECRET_KEY'] = 'thisissecret'
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite-path/todo.db'
+
+# # Connect to an existing database
+# conn = psycopg2.connect("dbname=todo user=postgres")
+# conn = psycopg2.connect("dbname=user user=postgres")
+
+# # Open a cursor to perform database operations
+# cur = conn.cursor(app)
+
+# # Execute a command: this creates a new table
+# todo = cur.execute(
+#     "CREATE TABLE todo (id integer PRIMARY KEY, text varchar(50), complete boolean, user_id varchar);"
+#     )
+# user = cur.execute("CREATE TABLE user (id integer PRIMARY KEY, public_id varchar(200), name varchar(50), password varchar(200), admin boolean);")
+
+# # Pass data to fill a query placeholders and let Psycopg perform
+# # the correct conversion (no more SQL injections!)
+# cur.execute("INSERT INTO todo (num, data) VALUES (%s, %s)",
+# ...      (100, "abc'def"))
+# cur.execute("INSERT INTO user (num, data) VALUES (%s, %s)",
+# ...      (100, "abc'def"))
+
+# # Query the database and obtain data as Python objects
+# cur.execute("SELECT * FROM test;")
+# cur.fetchone()
+# (1, 100, "abc'def")
+
+# # Make the changes to the database persistent
+# conn.commit()
+
+# # Close communication with the database
+# cur.close()
+# conn.close()
+
+# db = SQLAlchemy(app)
+
+# class User(db.Model):
+#     """
+#     Will store users 
+#     """
+#     id = db.Column(db.Integer, primary_key=True)
+#     public_id = db.Column(db.String(50), unique=True)
+#     name = db.Column(db.String(50))
+#     password = db.Column(db.String(80))
+#     admin = db.Column(db.Boolean)
+
+# class Todo(db.Model):
+#     """
+#     Will store todos
+#     """
+#     id = db.Column(db.Integer, primary_key=True)
+#     text = db.Column(db.String(50))
+#     complete = db.Column(db.Boolean)
+#     user_id = db.Column(db.Integer)
+
+class DatabaseConnection:
+    def __init__(self):
+        try:
+            self.connection = psycopg2.connect(
+                "dbname='todos' user='postgres' host='localhost' password='1234' port='5432' "
+            )
+            self.connection.autocommit = True
+            self.cursor = self.connection.cursor()
+        except:
+            pprint("Cannot connect to the database")
+
+    def create_table_user(self):
+
+        create_table_user = self.cursor.execute("CREATE TABLE user (id serial PRIMARY KEY, public_id varchar(50) UNIQUE, name varchar(50), password varchar(80), admin boolean=True ")
+        self.cursor.execute(create_table_user)
+
+    def insert_new_record(self):
+        new_user = ("tsofa", "12345", True) 
+        insert_command = "INSERT INTO user(name, password, admin) VALUES('" +new_user[0] + "', '" +new_user[1] +"')"
+        pprint(insert_command)
+        self.cursor.execute(insert_command)
+
+        
+
+@app.route('/user', methods=['POST'])
+def create_user():
+    data = request.get_json()
+    hashed_password = generate_password_hash(data['password'], method='sha256')
+    # new_user = create_table_user.public_id=str(uuid.uuid4), create_table_user.name=data['name'], create_table_user.password=hashed_password, create_table_user.admin=False)
+    # user.session.add(new_user)
+    # user.session.commit()
+    # cursor.execute(create_table_user)
+    
+    return jsonify({"message": "New user has been created!"})
+
+@app.route('/user', methods=['GET'])
+def get_all_users():
+    return ''
+
+@app.route('/user/<int:id>', methods=['GET'])
+def get_a_user(id):
+    return ''
+
+@app.route('/user/<int:id>', methods=['PUT'])
+def edit_user(id):
+    return ''
+
+@app.route('/user/<int:id>', methods=['DELETE'])
+def delete_user(id):
+    return ''
+
+if __name__ =='__main__':
+    app.run(debug=True)
+    database_connection = DatabaseConnection()
