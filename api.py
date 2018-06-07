@@ -154,6 +154,77 @@ def login():
         return jsonify({'token' : token.decode('UTF-8')})
     return make_response('Could not verify', 401, {'www-Authenticate': 'Basic realm="Login required!"'})
 
+
+# create a todo
+@app.route('/todo', methods=['POST'])
+@token_required
+def create_todo(create_user):
+    data = request.get_json()
+
+    new_todo = Todo(text=data['text'], complete=False, user_id=create_user.id)
+    db.session.add(new_todo)
+    db.session.commit()
+
+    return jsonify({'message' : 'A new todo has been created!'})
+#list all todos
+@app.route('/todo', methods=['GET'])
+@token_required
+def list_all_todo(create_user):
+    todos = Todo.query.filter_by(user_id=create_user.id).all()
+
+    output = []
+    for todo in todos:
+        todo_data = {}
+        todo_data['id'] = todo.id
+        todo_data['text'] = todo.text
+        todo_data['complete'] = todo.complete
+        todo_data['user_id'] = todo.user_id
+        output.append(todo_data)
+
+    return jsonify({'todos' : output})
+
+
+# list a single todo
+@app.route('/todo/<todo_id>', methods=['GET'])
+@token_required
+def list_single_todo(create_user, todo_id):
+    todo = Todo.query.filter_by(id=todo_id, user_id=create_user.id).first()
+    if not todo:
+        return jsonify({'message' : 'No todo found!'})
+
+    todo_data = {}    
+    todo_data['id'] = todo.id
+    todo_data['text'] = todo.text
+    todo_data['complete'] = todo.complete
+    todo_data['user_id'] = todo.user_id
+
+    return jsonify(todo_data)
+
+# edit a todo
+@app.route('/todo/<todo_id>', methods=['PUT'])
+@token_required
+def edit_a_todo(create_user, todo_id):
+    todo = Todo.query.filter_by(id=todo_id, user_id=create_user.id).first()
+    if not todo:
+        return jsonify({'message' : 'No todo found!'})
+    todo.complete = True
+    db.session.commit()
+    return jsonify({'message' : 'Todo item has been completed!'})
+
+# delete a todo
+@app.route('/todo/<todo_id>', methods=['DELETE'])
+@token_required
+def delete_a_todo(create_user, todo_id):
+    todo = Todo.query.filter_by(id=todo_id, user_id=create_user.id).first()
+    if not todo:
+        return jsonify({'message' : 'No todo found!'})
+    db.session.delete(todo)
+    db.session.commit()
+    return jsonify({'message' : 'Todo item has been deleted!'})
+    
+
+
+
 if __name__ =='__main__':
     app.run(debug=True)
     
