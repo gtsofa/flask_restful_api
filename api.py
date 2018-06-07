@@ -1,9 +1,12 @@
 # api.py
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 
 import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
+import jwt
+import datetime
+from functools import wraps
 
 from instance.config import app_config
 
@@ -44,9 +47,31 @@ class Todo(db.Model):
     complete = db.Column(db.Boolean)
     user_id = db.Column(db.Integer)
 
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+
+        if 'x-access-token' in request.headers:
+            token = request.headers['x-access-token']
+
+        if not token:
+            return jsonify({'message' : 'Token is missing!'}), 401
+
+        try:
+            data = jwt.decode(token, app.config['SECRET_KEY'])
+            current_user = Users.query.filter_by(public_id=data['public_id']).first()
+        except:
+            return jsonify({'message' : 'Token is invalid'}), 401
+        return f(current_user, *args, **kwargs)
+    return decorated
+
 
 @app.route('/user', methods=['POST'])
-def create_user():
+@token_required
+def create_user(create_user):
+    if not create_user.admin:
+        return jsonify({'message' : 'Cannot perform that function!'})
     data = request.get_json()
     hashed_password = generate_password_hash(data['password'], method='sha256')
     new_user = Users(public_id=str(uuid.uuid4()), name=data['name'], password=hashed_password, admin=False)
@@ -56,7 +81,10 @@ def create_user():
     return jsonify({"message": "New user has been created!"})
 
 @app.route('/user', methods=['GET'])
-def get_all_users():
+@token_required
+def get_all_users(create_user):
+    if not create_user.admin:
+        return jsonify({'message' : 'Cannot perform that function!'})
     users = Users.query.all()
 
     output = [] # store results in this list from json
@@ -72,7 +100,10 @@ def get_all_users():
     return jsonify({'users': output})
 
 @app.route('/user/<string:public_id>', methods=['GET'])
-def get_a_user(public_id):
+@token_required
+def get_a_user(create_user, public_id):
+    if not create_user.admin:
+        return jsonify({'message' : 'Cannot perform that function!'})
     user = Users.query.filter_by(public_id=public_id).first()
     if not user:
         return jsonify({'message' : 'No user found!'})
@@ -84,13 +115,44 @@ def get_a_user(public_id):
 
     return jsonify({'user': user_data})
 
-@app.route('/user/<int:id>', methods=['PUT'])
-def edit_user(id):
-    return ''
+@app.route('/user/<string:public_id>', methods=['PUT'])
+@token_required
+def edit_user(create_user, public_id):
+    if not create_user.admin:
+        return jsonify({'message' : 'Cannot perform that function!'})
+    user = Users.query.filter_by(public_id=public_id).first()
+    if not user:
+        return jsonify({'message' : 'No user found!'})
+    user.admin = True
+    db.session.commit()
+    return jsonify({'message': 'User has been promoted!'})
 
-@app.route('/user/<int:id>', methods=['DELETE'])
-def delete_user(id):
-    return ''
+@app.route('/user/<string:public_id>', methods=['DELETE'])
+@token_required
+def delete_user(create_user,  public_id):
+    if not create_user.admin:
+        return jsonify({'message' : 'Cannot perform that function!'})
+    user = Users.query.filter_by(public_id=public_id).first()
+    if not user:
+        return jsonify({'message' : 'No user found!'})
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({'message': 'The user has been deleted!'})
+
+@app.route('/login')
+def login():
+    auth = request.authorization
+
+    if not auth or not auth.username or not auth.password:
+        return make_response('Could not verify', 401, {'www-Authenticate': 'Basic realm="Login required!"'})
+
+    user = Users.query.filter_by(name=auth.username).first()
+    if not user:
+        return make_response('Could not verify', 401, {'www-Authenticate': 'Basic realm="Login required!"'})
+    if check_password_hash(user.password, auth.password):
+        token = jwt.encode({'public_id' : user.public_id, 'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config['SECRET_KEY'])
+        return jsonify({'token' : token.decode('UTF-8')})
+    return make_response('Could not verify', 401, {'www-Authenticate': 'Basic realm="Login required!"'})
 
 if __name__ =='__main__':
     app.run(debug=True)
