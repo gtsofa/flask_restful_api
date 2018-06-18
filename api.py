@@ -1,20 +1,19 @@
 # api.py
 import os
+from pprint import pprint
+from functools import wraps
+import datetime
+import uuid
 from flask import Flask, request, jsonify, make_response
 
-import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
+import psycopg2
 import jwt
-import datetime
-from functools import wraps
 
-from instance.config import app_config
+#from instance.config import app_config
 
 #from flask_sqlachemy import SQLAlchemy
 from flask_sqlalchemy import SQLAlchemy
-import psycopg2
-
-from pprint import pprint
 
 app = Flask(__name__)
 
@@ -129,7 +128,7 @@ def edit_user(create_user, public_id):
 
 @app.route('/user/<string:public_id>', methods=['DELETE'])
 @token_required
-def delete_user(create_user,  public_id):
+def delete_user(create_user, public_id):
     if not create_user.admin:
         return jsonify({'message' : 'Cannot perform that function!'})
     user = Users.query.filter_by(public_id=public_id).first()
@@ -225,6 +224,6 @@ def delete_a_todo(create_user, todo_id):
 
 
 
-if __name__ =='__main__':
+if __name__=='__main__':
     app.run(debug=True)
     
