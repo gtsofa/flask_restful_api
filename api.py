@@ -10,41 +10,45 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 import jwt
 
+from app import create_app
+
+app = create_app('development')
+
 #from instance.config import app_config
 
 #from flask_sqlachemy import SQLAlchemy
-from flask_sqlalchemy import SQLAlchemy
+#from flask_sqlalchemy import SQLAlchemy
 
-app = Flask(__name__)
+# app = Flask(__name__)
 
-config_name = os.getenv('APP_SETTINGS')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'thisissecret'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///todo_db'
+# config_name = os.getenv('APP_SETTINGS')
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# app.config['SECRET_KEY'] = 'thisissecret'
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///todo_db'
 #SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/test_db'
 
 
 
-db = SQLAlchemy(app)
+# db = SQLAlchemy(app)
 
-class Users(db.Model):
-    """
-    Will store users 
-    """
-    id = db.Column(db.Integer, primary_key=True)
-    public_id = db.Column(db.String(50), unique=True)
-    name = db.Column(db.String(50))
-    password = db.Column(db.String(80))
-    admin = db.Column(db.Boolean)
+# class Users(db.Model):
+#     """
+#     Will store users 
+#     """
+#     id = db.Column(db.Integer, primary_key=True)
+#     public_id = db.Column(db.String(50), unique=True)
+#     name = db.Column(db.String(50))
+#     password = db.Column(db.String(80))
+#     admin = db.Column(db.Boolean)
 
-class Todo(db.Model):
-    """
-    Will store todos
-    """
-    id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.String(50))
-    complete = db.Column(db.Boolean)
-    user_id = db.Column(db.Integer)
+# class Todo(db.Model):
+#     """
+#     Will store todos
+#     """
+#     id = db.Column(db.Integer, primary_key=True)
+#     text = db.Column(db.String(50))
+#     complete = db.Column(db.Boolean)
+#     user_id = db.Column(db.Integer)
 
 def token_required(f):
     @wraps(f)
